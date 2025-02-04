@@ -1,0 +1,150 @@
+
+/* V01: Assigment 11 configuration. */
+/* V02: Added: Application http port 80 */
+/* V03: Added: Application http port 8000 */
+/* V04: ?? */
+/* V05: Still all 3 interfaces in one zone */
+/* V06: Dividede zones into multiple Zones */
+version 12.1X47-D15.4;
+system {
+    host-name vSRX_1;
+    /* User: root Password: Rootpass */
+    root-authentication {
+        encrypted-password "$1$4TkbZDtp$6E8C6Bg7K6gnHR31XnJjl0";
+    }
+}
+interfaces {
+    ge-0/0/1 {
+        unit 0 {
+            family inet {
+                address 192.168.10.1/24;
+            }
+        }
+    }
+    ge-0/0/2 {
+        unit 0 {
+            family inet {
+                address 192.168.11.1/24;
+            }
+        }
+    }
+    ge-0/0/3 {
+        unit 0 {
+            family inet {
+                address 10.10.10.1/30;
+            }
+        }
+    }
+}
+routing-options {
+    static {
+        route 192.168.12.0/24 next-hop 10.10.10.2;
+        route 192.168.13.0/24 next-hop 10.10.10.2;
+    }
+}
+security {
+    address-book {
+        global {
+            address SENSOR_LAN 192.168.10.0/24;
+            address SERVER_LAN 192.168.11.0/24;
+            address WEB_SERVER 192.168.11.2/32;
+            address PC4 192.168.13.2/32;
+            address-set SENSOR_AND_SERVER_LANS {
+                address SENSOR_LAN;
+                address SERVER_LAN;
+            }
+            address-set SENSOR_LAN_AND_PC4 {
+                address SENSOR_LAN;
+                address PC4;
+            }
+        }
+    }
+    policies {
+        from-zone SENSOR_LAN to-zone SERVER_LAN {
+            policy allow-icmp-udp-http-ports-80-8000 {
+                match {
+                    source-address any;
+                    destination-address any;
+                    /* udp enables traceroute */
+                    application [ junos-icmp-ping
+                                  /* junos-udp-any */
+                                  junos-http
+                                  my-http-8000];
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone SENSOR_LAN to-zone INTER_LAN_1 {
+            policy allow-icmp-udp {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application [ junos-icmp-ping junos-udp-any ];
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone INTER_LAN_1 to-zone SERVER_LAN {
+            policy allow-PC4-http-to-PC2 {
+                match {
+                    source-address PC4;
+                    destination-address WEB_SERVER;
+                    application [ junos-http my-http-8000 ];
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        default-policy {
+            deny-all;
+        }
+    }
+    zones {
+        security-zone SENSOR_LAN {
+            interfaces {
+                ge-0/0/1.0 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                        }
+                    }
+                }
+            }
+        }
+        security-zone SERVER_LAN {
+            interfaces {
+                ge-0/0/2.0 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                        }
+                    }
+                }
+            }
+        }
+        security-zone INTER_LAN_1 {
+            interfaces {
+                ge-0/0/3.0 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+applications {
+    application my-http-8000 {
+        application-protocol http;
+        protocol tcp; /* Protocol at layers below application layer */
+        destination-port 8000;
+    }
+}
+
