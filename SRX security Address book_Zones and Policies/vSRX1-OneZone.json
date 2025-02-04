@@ -25,7 +25,7 @@ interfaces {
     ge-0/0/3 {
         unit 0 {
             family inet {
-                address 10.10.10.1/30;
+                address 10.10.10.1/24;
             }
         }
     }
@@ -41,8 +41,9 @@ security {
         global {
             address SENSOR_LAN 192.168.10.0/24;
             address SERVER_LAN 192.168.11.0/24;
-            address WEB_SERVER 192.168.11.2/32;
-            address PC4 192.168.13.2/32;
+            address WEB_SERVER 192.168.11.2;
+            address PC3 192.168.12.2;
+            address PC4 192.168.13.2;
             address-set SENSOR_AND_SERVER_LANS {
                 address SENSOR_LAN;
                 address SERVER_LAN;
@@ -78,7 +79,7 @@ security {
             }
         }
         default-policy {
-            deny-all;
+            permit-all;
         }
     }
 
