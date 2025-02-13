@@ -32,8 +32,8 @@ interfaces {
 }
 routing-options {
     static {
-        route 192.168.10.0/24 next-hop 10.10.10.1;
-        route 192.168.11.0/24 next-hop 10.10.10.1;
+        route 192.168.10.0/24 next-hop 10.10.10.1; /* Next hop is the SRX1 */
+        route 192.168.11.0/24 next-hop 10.10.10.1; /* Next hop is the SRX1 */
     }
 }
 security {
