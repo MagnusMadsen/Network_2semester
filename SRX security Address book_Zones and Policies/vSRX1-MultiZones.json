@@ -1,10 +1,4 @@
 
-/* V01: Assigment 11 configuration. */
-/* V02: Added: Application http port 80 */
-/* V03: Added: Application http port 8000 */
-/* V04: ?? */
-/* V05: Still all 3 interfaces in one zone */
-/* V06: Dividede zones into multiple Zones */
 version 12.1X47-D15.4;
 system {
     host-name vSRX_1;
@@ -77,6 +71,18 @@ security {
             }
         }
         from-zone SENSOR_LAN to-zone INTER_LAN_1 {
+            policy allow-icmp-udp {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application [ junos-icmp-ping junos-udp-any ];
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone SERVER_LAN to-zone INTER_LAN_1 {
             policy allow-icmp-udp {
                 match {
                     source-address any;

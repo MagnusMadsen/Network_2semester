@@ -1,10 +1,4 @@
 
-/* V01: Assigment 11 configuration. */
-/* V02: Added: Application http port 80 */
-/* V03: Added: Application http port 8000 */
-/* V04: ?? */
-/* V05: Still all 3 interfaces in one zone */
-/* V06: Dividede zones into multiple Zones */
 version 12.1X47-D15.4;
 system {
     host-name vSRX_1;
@@ -28,39 +22,42 @@ interfaces {
             }
         }
     }
-    ge-0/0/3 {
+    ge-0/0/4 {
         unit 0 {
             family inet {
-                address 10.10.10.1/30;
+                address 10.10.10.2/30;
             }
         }
     }
 }
 routing-options {
     static {
-        route 192.168.12.0/24 next-hop 10.10.10.2;
-        route 192.168.13.0/24 next-hop 10.10.10.2;
+        route 192.168.10.0/24 next-hop 10.10.10.1;
+        route 192.168.11.0/24 next-hop 10.10.10.1;
     }
 }
 security {
     address-book {
         global {
-            address SENSOR_LAN 192.168.10.0/24;
+            address ACTUATOR_LAN_A 192.168.12.0/24;
+            address ACTUATOR_LAN_B 192.168.13.0/24;
             address SERVER_LAN 192.168.11.0/24;
             address WEB_SERVER 192.168.11.2/32;
             address PC4 192.168.13.2/32;
+            address PC3 192.168.12.2/32;
             address-set SENSOR_AND_SERVER_LANS {
-                address SENSOR_LAN;
+                address ACTUATOR_LAN_A;
+                address ACTUATOR_LAN_B;
                 address SERVER_LAN;
             }
             address-set SENSOR_LAN_AND_PC4 {
-                address SENSOR_LAN;
+                address ACTUATOR_LAN_B;
                 address PC4;
             }
         }
     }
     policies {
-        from-zone SENSOR_LAN to-zone SERVER_LAN {
+        from-zone ACTUATOR_LAN_B to-zone ACTUATOR_LAN_A {
             policy allow-icmp-udp-http-ports-80-8000 {
                 match {
                     source-address any;
@@ -76,7 +73,7 @@ security {
                 }
             }
         }
-        from-zone SENSOR_LAN to-zone INTER_LAN_1 {
+        from-zone ACTUATOR_LAN_B to-zone INTER_LAN_1 {
             policy allow-icmp-udp {
                 match {
                     source-address any;
@@ -88,7 +85,7 @@ security {
                 }
             }
         }
-        from-zone INTER_LAN_1 to-zone SERVER_LAN {
+        from-zone INTER_LAN_1 to-zone ACTUATOR_LAN_A {
             policy allow-PC4-http-to-PC2 {
                 match {
                     source-address PC4;
@@ -105,7 +102,7 @@ security {
         }
     }
     zones {
-        security-zone SENSOR_LAN {
+        security-zone ACTUATOR_LAN_A {
             interfaces {
                 ge-0/0/1.0 {
                     host-inbound-traffic {
@@ -116,7 +113,7 @@ security {
                 }
             }
         }
-        security-zone SERVER_LAN {
+        security-zone ACTUATOR_LAN_B {
             interfaces {
                 ge-0/0/2.0 {
                     host-inbound-traffic {
@@ -129,7 +126,7 @@ security {
         }
         security-zone INTER_LAN_1 {
             interfaces {
-                ge-0/0/3.0 {
+                ge-0/0/4.0 {
                     host-inbound-traffic {
                         system-services {
                             ping;
@@ -147,4 +144,3 @@ applications {
         destination-port 8000;
     }
 }
-
