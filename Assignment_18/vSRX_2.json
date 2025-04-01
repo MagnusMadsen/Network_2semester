@@ -1,0 +1,106 @@
+## Router provides DHCP on ge-0/0/3 and ge-0/0/4
+## Legacy DHCP configuration
+version 12.1X47-D15.4;
+system {
+    host-name R2;
+    /* User: root Password: Rootpass */
+    root-authentication {
+        encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";
+    }
+    services {
+        ssh;
+        dhcp {
+            /* Net1 */
+            pool 192.168.12.0/24 {
+                address-range low 192.168.12.50 high 192.168.12.60;
+                name-server 8.8.8.8;
+                router 192.168.12.1;
+                default-lease-time 600; /* seconds. 60 for test! */
+            }
+            /* Net2 */
+            pool 192.168.13.0/24 {
+                address-range low 192.168.13.70 high 192.168.13.80;
+                name-server 8.8.8.8;
+                router 192.168.13.1;
+                default-lease-time 600; /* seconds. 60 for test! */
+            }
+        }
+    }
+}
+interfaces {
+    ge-0/0/1 {
+        unit 0 {
+            family inet {
+                address 192.168.12.1/24;
+            }
+        }
+    }
+    ge-0/0/2 {
+        unit 0 {
+            family inet {
+                address 192.168.13.1/24;
+            }
+        }
+    }
+    ge-0/0/3 {
+        unit 0 {
+            family inet {
+                address 10.10.10.12/24;
+            }
+        }
+    }
+}
+routing-options {
+    static {
+        route 192.168.10.0/24 next-hop 10.10.10.11;
+        route 192.168.11.0/24 next-hop 10.10.10.11;
+    }
+}
+security {
+    policies {
+        from-zone trust to-zone trust {
+            policy default-permit {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+    zones {
+        security-zone trust {
+            interfaces {
+                ge-0/0/1.0 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                            ssh;
+							dhcp; /* Open for access to DHCP server */
+                        }
+                    }
+                }
+                ge-0/0/2.0 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                            ssh;
+                            dhcp; /* Open for access to DHCP server */
+                        }
+                    }
+                }
+                ge-0/0/3.0 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                            ssh;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
