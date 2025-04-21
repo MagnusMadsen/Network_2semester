@@ -1,0 +1,110 @@
+system {
+    host-name SRX1;
+    root-authentication {
+        encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";  ## hash
+    }
+    services {
+        ssh;
+        telnet;
+        web-management {
+            http;
+            https {
+		system-generated-certificate;
+		}
+        }
+    }
+}
+
+interfaces {
+    ge-0/0/1 {
+        unit 0 {
+            family inet {
+                address 192.168.1.1/24;  ## Net1 - PC1 (på VM - Lan segment 1)
+            }
+        }
+    }
+    ge-0/0/2 {
+        unit 0 {
+            family inet {
+                address 192.168.2.1/24;  ## Net2 - PC2 (på VM - Lan segment 2)
+            }
+        }
+    }
+    ge-0/0/3 {
+        unit 0 {
+            family inet {
+                address 10.0.0.1/30;  ## Transit til R2 (på VM - Lan segment 3)
+            }
+        }
+    }
+}
+
+security {
+    zones {
+        security-zone trust {
+            interfaces {
+                ge-0/0/1.0;
+                ge-0/0/2.0;
+                ge-0/0/3.0;
+            }
+            host-inbound-traffic {
+                system-services {
+                    all;
+                }
+                protocols {
+                    all;
+                }
+            }
+        }
+    }
+}
+
+system {
+    services {
+        dhcp {
+            pool 192.168.1.0/24 {
+                address-range {
+                    low 192.168.1.10;
+                    high 192.168.1.100;
+                }
+                router {
+                    192.168.1.1;
+                }
+            }
+            pool 192.168.2.0/24 {
+                address-range {
+                    low 192.168.2.10;
+                    high 192.168.2.100;
+                }
+                router {
+                    192.168.2.1;
+                }
+            }
+            pool 192.168.3.0/24 {
+                address-range {
+                    low 192.168.3.10;
+                    high 192.168.3.100;
+                }
+                router {
+                    192.168.3.1;
+                }
+            }
+            pool 192.168.4.0/24 {
+                address-range {
+                    low 192.168.4.10;
+                    high 192.168.4.100;
+                }
+                router {
+                    192.168.4.1;
+                }
+            }
+        }
+    }
+}
+
+routing-options {
+    static {
+        route 192.168.3.0/24 next-hop 10.0.0.2;
+        route 192.168.4.0/24 next-hop 10.0.0.2;
+    }
+}
