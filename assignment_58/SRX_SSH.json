@@ -7,6 +7,11 @@ system {
         8.8.8.8;  # DNS-servere
         1.1.1.1;
     }
+    services {
+        ssh {
+            root-login allow;  # Tillad SSH login som root
+        }
+    }
 }
 
 interfaces {
@@ -41,7 +46,6 @@ routing-options {
 
 security {
     nat {
-        /* NAT ændrer kildeadressen på udgående IP-pakker */
         source {
             rule-set trust-to-untrust {
                 from zone trust;
@@ -68,7 +72,7 @@ security {
                 match {
                     source-address any;
                     destination-address any;
-                    application any;
+                    application ssh;
                 }
                 then {
                     permit;
@@ -76,14 +80,14 @@ security {
             }
         }
         from-zone untrust to-zone trust {
-            policy default-deny {
+            policy allow-ssh {
                 match {
                     source-address any;
                     destination-address any;
-                    application any;
+                    application ssh;  # Tillad SSH trafik
                 }
                 then {
-                    deny;
+                    permit;
                 }
             }
         }
