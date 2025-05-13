@@ -1,0 +1,135 @@
+system {
+    host-name vSRX;
+    root-authentication {
+        encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";  # Skift passwordet her
+    }
+    name-server {
+        8.8.8.8;  # DNS-servere
+        1.1.1.1;
+    }
+}
+
+interfaces {
+    ge-0/0/0 {
+        unit 0 {
+            family inet {
+                address 192.168.1.1/24;  # Ekstern IP til at kommunikere med internettet
+            }
+        }
+    }
+    ge-0/0/1 {
+        unit 0 {
+            family inet {
+                address 192.168.12.1/24;  # Intern IP til klienter på netværk 1
+            }
+        }
+    }
+    ge-0/0/2 {
+        unit 0 {
+            family inet {
+                address 192.168.13.1/24;  # Intern IP til klienter på netværk 2
+            }
+        }
+    }
+}
+
+routing-options {
+    static {
+        route 0.0.0.0/0 next-hop 192.168.1.1;  # Standard gateway for internetadgang
+    }
+}
+
+security {
+    nat {
+        /* NAT ændrer kildeadressen på udgående IP-pakker */
+        source {
+            rule-set trust-to-untrust {
+                from zone trust;
+                to zone untrust;
+                rule rule-any-to-any {
+                    match {
+                        source-address 0.0.0.0/0;
+                        destination-address 0.0.0.0/0;
+                    }
+                    then {
+                        source-nat {
+                            /* Brug den udgående interfaces IP-adresse som kilde */
+                            interface ge-0/0/0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    policies {
+        from-zone trust to-zone trust {
+            policy default-permit {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone untrust to-zone trust {
+            policy default-deny {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    deny;
+                }
+            }
+        }
+        from-zone trust to-zone untrust {
+            policy internet-access {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+
+    zones {
+        security-zone trust {
+            interfaces {
+                ge-0/0/1 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                        }
+                    }
+                }
+                ge-0/0/2 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                        }
+                    }
+                }
+            }
+        }
+        security-zone untrust {
+            interfaces {
+                ge-0/0/0 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
