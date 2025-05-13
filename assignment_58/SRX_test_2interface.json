@@ -1,0 +1,84 @@
+system {
+    host-name vSRX;
+    root-authentication {
+        encrypted-password "$1$...";  # Skift passwordet her
+    }
+    name-server {
+        8.8.8.8;  # DNS-servere
+        1.1.1.1;
+    }
+}
+
+interfaces {
+    ge-0/0/0 {
+        unit 0 {
+            family inet {
+                address 192.168.1.1/24;  # Ekstern IP til at kommunikere med internettet
+            }
+        }
+    }
+    ge-0/0/1 {
+        unit 0 {
+            family inet {
+                address 192.168.2.1/24;  # Intern IP til at kommunikere med klienter
+            }
+        }
+    }
+}
+
+security {
+    zones {
+        security-zone trust {
+            interfaces {
+                ge-0/0/1;  # Intern zone til lokale klienter
+            }
+        }
+        security-zone untrust {
+            interfaces {
+                ge-0/0/0;  # Ekstern zone for internetadgang
+            }
+        }
+    }
+
+    policies {
+        from trust to untrust {
+            policy allow-all {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+
+    nat {
+        source {
+            rule-set default {
+                from zone trust {
+                    to zone untrust {
+                        rule allow-nat {
+                            match {
+                                source-address 192.168.2.0/24;
+                            }
+                            then {
+                                source-nat {
+                                    interface ge-0/0/0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+routing-options {
+    static {
+        route 0.0.0.0/0 next-hop 192.168.1.1;  # Standard gateway for internetadgang
+    }
+}
