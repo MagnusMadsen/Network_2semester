@@ -12,28 +12,28 @@ system {
 }
 
 interfaces {
-    ge-0/0/1 {
+    ge-0/0/0 {
         unit 0 {
             family inet {
-                address 192.168.11.1/24;  # Server LAN
+                address 192.168.5.1/24;  # Ekstern internet IP
             }
         }
     }
-    ge-0/0/2 {
+    ge-0/0/1 {
         unit 0 {
             family inet {
                 address 192.168.12.1/24;  # Web Server LAN
             }
         }
     }
-    ge-0/0/3 {
+    ge-0/0/2 {
         unit 0 {
             family inet {
                 address 192.168.13.1/24;  # User LAN
             }
         }
     }
-    ge-0/0/4 {
+    ge-0/0/3 {
         unit 0 {
             family inet {
                 address 10.56.16.2/24;  # WAN via VMnet8
@@ -108,7 +108,7 @@ security {
                         }
                     }
                 }
-                ge-0/0/4.0 {
+                ge-0/0/0.0 {
                     host-inbound-traffic {
                         system-services {
                             ping;

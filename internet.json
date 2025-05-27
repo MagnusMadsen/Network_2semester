@@ -1,0 +1,166 @@
+version 12.1X47-D15.4;
+
+system {
+    host-name SRX1;
+    root-authentication {
+        encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";
+    }
+    name-server {
+        8.8.8.8;
+        1.1.1.1;
+    }
+    services {
+        ssh;
+        web-management {
+            http;
+            https {
+                system-generated-certificate;
+            }
+        }
+    }
+}
+
+interfaces {
+    ge-0/0/1 {
+        unit 0 {
+            family inet {
+                address 192.168.1.1/24;
+            }
+        }
+    }
+    ge-0/0/2 {
+        unit 0 {
+            family inet {
+                address 192.168.2.1/24;
+            }
+        }
+    }
+    ge-0/0/3 {
+        unit 0 {
+            family inet {
+                address 10.56.16.2/24;  ## WAN - VMware NAT
+            }
+        }
+    }
+}
+
+routing-options {
+    static {
+        route 0.0.0.0/0 next-hop 10.56.16.1;
+    }
+}
+
+security {
+    zones {
+        security-zone trust {
+            interfaces {
+                ge-0/0/1.0;
+                ge-0/0/2.0;
+            }
+            host-inbound-traffic {
+                system-services {
+                    all;
+                }
+                protocols {
+                    all;
+                }
+            }
+        }
+        security-zone untrust {
+            interfaces {
+                ge-0/0/3.0;
+            }
+            host-inbound-traffic {
+                system-services {
+                    all;
+                }
+                protocols {
+                    all;
+                }
+            }
+        }
+    }
+
+    policies {
+        from-zone trust to-zone untrust {
+            policy allow-all {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone untrust to-zone trust {
+            policy allow-all-back {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone trust to-zone trust {
+            policy trust-to-trust {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+
+    nat {
+        source {
+            rule-set nat-all {
+                from zone trust;
+                to zone untrust;
+                rule nat-all-out {
+                    match {
+                        source-address 0.0.0.0/0;
+                    }
+                    then {
+                        source-nat {
+                            interface;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+system {
+    services {
+        dhcp {
+            pool 192.168.1.0/24 {
+                address-range {
+                    low 192.168.1.10;
+                    high 192.168.1.100;
+                }
+                router {
+                    192.168.1.1;
+                }
+            }
+            pool 192.168.2.0/24 {
+                address-range {
+                    low 192.168.2.10;
+                    high 192.168.2.100;
+                }
+                router {
+                    192.168.2.1;
+                }
+            }
+        }
+    }
+}
