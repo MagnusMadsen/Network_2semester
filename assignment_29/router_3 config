@@ -1,0 +1,87 @@
+version 12.1X47-D15.4;
+system {
+    host-name R3;
+    /* User: root Password: Rootpass */
+    root-authentication {
+        encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";
+    }
+}
+interfaces {
+    ge-0/0/1 {
+        unit 0 {
+            family inet {
+                address 192.168.10.1/24;
+            }
+        }
+    }
+    ge-0/0/2 {
+        unit 0 {
+            family inet {
+                address 192.168.11.1/24;
+            }
+        }
+    }
+    ge-0/0/3 {
+        unit 0 {
+            family inet {
+                address 10.10.10.1/24;
+            }
+        }
+    }
+}
+routing-options {
+    static {
+        route 0.0.0.0/0 next-hop 10.10.10.2;
+        /* Fjernet: route 10.10.12.0/24 next-hop 10.10.12.1 */
+    }
+}
+protocols {
+    ospf {
+        area 0 {
+            interface ge-0/0/3;            
+            interface ge-0/0/1 { passive; }
+            interface ge-0/0/2 { passive; }
+        }
+    }
+}
+security {
+    /* Fjernet NAT trust->trust */
+    policies {
+        from-zone trust to-zone trust {
+            policy default-permit {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+    zones {
+        security-zone trust {
+            interfaces {
+                ge-0/0/1 {
+                    host-inbound-traffic {
+                        system-services { ping; }
+                        protocols { ospf; }
+                    }
+                }
+                ge-0/0/2 {
+                    host-inbound-traffic {
+                        system-services { ping; }
+                        protocols { ospf; }
+                    }
+                }
+                ge-0/0/3 {
+                    host-inbound-traffic {
+                        system-services { ping; }
+                        protocols { ospf; }  /* OSPF-nabo på transit-linket */
+                    }
+                }
+            }
+        }
+    }
+}
