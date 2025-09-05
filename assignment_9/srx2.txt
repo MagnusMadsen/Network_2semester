@@ -1,0 +1,134 @@
+system {
+    host-name SRX2;
+    root-authentication {
+        encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";  ## hash
+    }
+    services {
+        ssh;
+        telnet;
+        web-management {
+            http;
+            https {
+                system-generated-certificate;
+            }
+        }
+    }
+}
+
+interfaces {
+    ge-0/0/1 {
+        unit 0 {
+            family inet {
+                address 192.168.3.1/24;  ## Net3 - PC3 (på VM - Lan segment 6_1)
+            }
+        }
+    }
+    ge-0/0/2 {
+        unit 0 {
+            family inet {
+                address 192.168.4.1/24;  ## Net4 - PC4 (på VM - Lan segment 7_2)
+            }
+        }
+    }
+    ge-0/0/3 {
+        unit 0 {
+            family inet {
+                address 10.0.0.2/30;     ## Transit til R1 (på VM - Lan segment 3)
+            }
+        }
+    }
+    ge-0/0/4 {
+        unit 0 {
+            family inet {
+                address 10.56.16.81/22; ## Uplink mod gateway 10.56.16.1
+            }
+        }
+    }
+}
+
+forwarding-options {
+    dhcp-relay {
+        server-group R1 {
+            10.0.0.1;
+        }
+        group RELAY-GROUP {
+            interface ge-0/0/1.0;
+            interface ge-0/0/2.0;
+            active-server-group R1;
+        }
+    }
+}
+
+security {
+    zones {
+        security-zone trust {
+            interfaces {
+                ge-0/0/1.0;
+                ge-0/0/2.0;
+                ge-0/0/3.0;
+            }
+            host-inbound-traffic {
+                system-services {
+                    all;
+                }
+                protocols {
+                    all;
+                }
+            }
+        }
+        security-zone untrust {
+            interfaces {
+                ge-0/0/4.0;
+            }
+            host-inbound-traffic {
+                system-services {
+                    none;
+                }
+                protocols {
+                    none;
+                }
+            }
+        }
+    }
+
+    policies {
+        from-zone trust to-zone untrust {
+            policy ALLOW-INTERNET {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+
+    nat {
+        source {
+            rule-set TRUST-TO-INET {
+                from zone trust;
+                to zone untrust;
+                rule NAT-ALL {
+                    match {
+                        source-address 0.0.0.0/0;
+                        destination-address 0.0.0.0/0;
+                    }
+                    then {
+                        source-nat {
+                            interface;   ## NAT til ge-0/0/4.0's udgående IP
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+routing-options {
+    static {
+        route 0.0.0.0/0 next-hop 10.56.16.1;  ## Default route til internettet
+    }
+}
