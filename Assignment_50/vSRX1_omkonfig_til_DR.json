@@ -17,13 +17,6 @@ interfaces {
             }
         }
     }
-    lo0 { 
-        unit 0 { 
-        family inet { 
-            address 192.168.100.1/32;
-             }
-        }
-    }
     ge-0/0/2 {
         unit 0 {
             family inet {
@@ -32,21 +25,32 @@ interfaces {
             }
         }
     }
+    lo0 { 
+        unit 0 { 
+            family inet { 
+                address 192.168.100.1/32;
+            }
+        }
+    }
 }
 protocols {
     ospf {
+        router-id 192.168.100.1;
         area 0.0.0.0 {
-        /* Make the interface make a point to point connection */
-            interface ge-0/0/2.0;
-        /* Make the interface make a point to point connection */
-            interface ge-0/0/1.0 interface-type p2p;
+            interface ge-0/0/1.0 {
+                interface-type p2p;
+            }
+            interface ge-0/0/2.0 {
+                interface-type p2p;
+            }
+            interface lo0.0;
         }
     }
 }
 security {
     policies {
-        /* This policy is needed for interfaceses in the R5_trust zone to intercommunicate */
-        from-zone R5_trust to-zone R5_trust {
+        /* Policy so interfaces in R1_trust zone can intercommunicate */
+        from-zone R1_trust to-zone R1_trust {
             policy default-permit {
                 match {
                     source-address any;
@@ -60,7 +64,7 @@ security {
         }
     }
     zones {
-        security-zone R5_trust {
+        security-zone R1_trust {
             interfaces {
                 ge-0/0/1.0 {
                     host-inbound-traffic {
@@ -68,7 +72,6 @@ security {
                             ping;
                         }
                         protocols {
-            /* Open this interface up for participation in OSPF */
                             ospf;
                         }
                     }
@@ -79,8 +82,14 @@ security {
                             ping;
                         }
                         protocols {
-            /* Open this interface up for participation in OSPF */
                             ospf;
+                        }
+                    }
+                }
+                lo0.0 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
                         }
                     }
                 }
