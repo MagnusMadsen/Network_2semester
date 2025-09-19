@@ -1,0 +1,84 @@
+system {
+    host-name R5;
+    root-authentication {
+        encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";
+    }
+}
+interfaces {
+    lo0 {
+        unit 0 {
+            family inet {
+                address 192.168.100.3/32;
+            }
+        }
+    }
+    ge-0/0/2 {
+        unit 0 {
+            family inet {
+                address 10.10.12.1/28;
+            }
+        }
+    }
+    ge-0/0/3 {
+        unit 0 {
+            family inet {
+                address 10.10.11.1/28;
+            }
+        }
+    }
+}
+protocols {
+    ospf {
+        router-id 192.168.100.3;
+        area 0.0.0.0 {
+            interface ge-0/0/2.0 {
+                interface-type p2p;
+            }
+            interface ge-0/0/3.0 {
+                interface-type p2p;
+            }
+            interface lo0.0 {
+                passive;
+            }
+        }
+    }
+}
+security {
+    policies {
+        from-zone R5_trust to-zone R5_trust {
+            policy default-permit {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+    zones {
+        security-zone R5_trust {
+            interfaces {
+                ge-0/0/2.0 {
+                    host-inbound-traffic {
+                        system-services { ping; }
+                        protocols { ospf; }
+                    }
+                }
+                ge-0/0/3.0 {
+                    host-inbound-traffic {
+                        system-services { ping; }
+                        protocols { ospf; }
+                    }
+                }
+                lo0.0 {
+                    host-inbound-traffic {
+                        system-services { ping; }
+                    }
+                }
+            }
+        }
+    }
+}
