@@ -1,8 +1,8 @@
 ## Assignment 49 OSPF routing protocol
-/* Magnus */
+/* Daniel */
 version 12.1X47-D15.4;
 system {
-    host-name R1;
+    host-name R5;
     /* User: root Password: Rootpass */
     root-authentication {
         encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";
@@ -13,7 +13,7 @@ interfaces {
         unit 0 {
             family inet {
                 /* Lan10 */
-                address 10.10.12.2/28;
+                address 10.10.12.1/28;
             }
         }
     }
@@ -21,7 +21,7 @@ interfaces {
         unit 0 {
             family inet {
                 /* Lan6 */
-                address 10.10.10.1/28;
+                address 10.10.11.1/28;
             }
         }
     }
@@ -30,9 +30,9 @@ protocols {
     ospf {
         area 0.0.0.0 {
         /* Make the interface make a point to point connection */
-            interface ge-0/0/2.0;
-        /* Make the interface make a point to point connection */
             interface ge-0/0/1.0 interface-type p2p;
+        /* Make the interface make a point to point connection */
+            interface ge-0/0/2.0 interface-type p2p;
         }
     }
 }
