@@ -1,0 +1,94 @@
+## Assignment 49 OSPF routing protocol
+/* Lex */
+version 12.1X47-D15.4;
+
+system {
+    host-name R2;
+    /* User: root Password: Rootpass */
+    root-authentication {
+        encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";
+    }
+}
+
+interfaces {
+    ge-0/0/1 {
+        unit 0 {
+            family inet {
+                /* Lan10 */
+                address 10.10.10.2/28;
+            }
+        }
+    }
+    ge-0/0/2 {
+        unit 0 {
+            family inet {
+                /* Lan6 */
+                address 10.10.11.2/28;
+            }
+        }
+    }
+    lo0 {
+        unit 0 {
+            family inet {
+                address 192.168.100.2/32;
+            }
+        }
+    }
+}
+
+protocols {
+    ospf {
+        router-id 192.168.100.2;
+        area 0.0.0.0 {
+            interface ge-0/0/1.0 {
+                interface-type p2p;
+            }
+            interface ge-0/0/2.0 {
+                interface-type p2p;
+            }
+            interface lo0.0;   ## Loopback deltager i OSPF
+        }
+    }
+}
+
+security {
+    policies {
+        /* This policy is needed for interfaces in the R2_trust zone to intercommunicate */
+        from-zone R2_trust to-zone R2_trust {
+            policy default-permit {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+    zones {
+        security-zone R2_trust {
+            interfaces {
+                ge-0/0/1.0 {
+                    host-inbound-traffic {
+                        system-services { ping; }
+                        protocols { ospf; }
+                    }
+                }
+                ge-0/0/2.0 {
+                    host-inbound-traffic {
+                        system-services { ping; }
+                        protocols { ospf; }
+                    }
+                }
+                lo0.0 {
+                    host-inbound-traffic {
+                        system-services { ping; }
+                        protocols { ospf; }
+                    }
+                }
+            }
+        }
+    }
+}
