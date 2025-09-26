@@ -1,5 +1,5 @@
 ## OSPF assignment 51
-/* By Per Dahlstroem. */
+/* By Lex */
 version 12.1X47-D15.4;
 system {
     host-name R2;
