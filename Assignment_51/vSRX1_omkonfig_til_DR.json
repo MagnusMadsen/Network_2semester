@@ -20,7 +20,7 @@ interfaces {
     ge-0/0/2 {
         unit 0 {
             family inet {
-                /* Lan6 */
+                /* Lan5 */
                 address 10.10.10.1/28;
             }
         }
@@ -28,7 +28,7 @@ interfaces {
     ge-0/0/3 {
         unit 0 {
             family inet {
-                /* Lan2 */
+                /* Lan1 */
                 address 192.168.13.1/24;
             }
         }
@@ -47,12 +47,12 @@ protocols {
         /* router-id 192.168.100.1; */
         area 0.0.0.0 {
             interface lo0;
-            interface ge-0/0/1.0;
-            interface ge-0/0/2.0;
+            interface ge-0/0/1.0 interface-type p2p;
+            interface ge-0/0/2.0 interface-type p2p;
         }
     }
 }            
- /* Passive OSPF on lo0 so it is advertised but not used for adjacencies {
+/* Passive OSPF on lo0 so it is advertised but not used for adjacencies {
                 interface-type p2p;
             }
             interface ge-0/0/2.0 {
