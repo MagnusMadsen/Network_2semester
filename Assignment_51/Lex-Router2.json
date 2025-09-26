@@ -1,8 +1,8 @@
-## Assignment 49 OSPF routing protocol
-/* Daniel */
+## OSPF assignment 51
+/* By Per Dahlstroem. */
 version 12.1X47-D15.4;
 system {
-    host-name R1;
+    host-name R2;
     /* User: root Password: Rootpass */
     root-authentication {
         encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";
@@ -13,63 +13,58 @@ interfaces {
         unit 0 {
             family inet {
                 /* Lan10 */
-                address 10.10.12.2/28;
+                address 10.10.10.2/28;
             }
         }
     }
     ge-0/0/2 {
         unit 0 {
             family inet {
-                /* Lan5 */
-                address 10.10.10.1/28;
+                /* Lan6 */
+                address 10.10.11.2/28;
             }
         }
     }
     ge-0/0/3 {
         unit 0 {
             family inet {
-                /* Lan1 */
-                address 192.168.13.1/24;
+                /* USERLAN3 */
+                address 192.168.14.1/24;
             }
         }
     }
-    lo0 { 
-        unit 0 { 
-            family inet { 
-                address 192.168.100.1/32;
+    lo0 {
+        unit 0 {
+            family inet {
+                address 192.168.100.2/32;
             }
         }
     }
 }
-routing-options {
-    router-id 192.168.100.1;
+routing-options { 
+	router-id 192.168.100.2;
 }
 protocols {
     ospf {
-        export route-to-USERLAN1;
+        export my-route-to-USERLAN2;
         area 0.0.0.0 {
             interface lo0;
-            interface ge-0/0/1.0 interface-type p2p;
-            interface ge-0/0/2.0;
-        }
-    }
-}            
-/* Passive OSPF on lo0 so it is advertised but not used for adjacencies {
-                interface-type p2p;
-            }
-            interface ge-0/0/2.0 {
-                interface-type p2p;
-            }
-            interface lo0.0;
+            interface ge-0/0/1.0;
+            interface ge-0/0/2.0 interface-type p2p;
         }
     }
 }
-*/
 policy-options {
-    policy-statement route-to-USERLAN1 {
-        term accept-route-to-USERLAN1 {
+    policy-statement my-route-to-USERLAN2 {
+        term accept-my-route-to-USERLAN2 {
             from {
-                route-filter 192.168.13.0/24 exact;
+                /* route-filter destination-prefix/prefix-length match-type */  
+                /* match type exampkes: */
+                /* exact subnet mask */
+                /* orlonger subnet mask */
+                /* longer subnet mask */
+                /* upto subnet mask */
+                route-filter 192.168.14.0/24 exact;
             }
             then accept;
         }
@@ -77,8 +72,7 @@ policy-options {
 }
 security {
     policies {
-        /* Policy so interfaces in R1_trust zone can intercommunicate */
-        from-zone R1_trust to-zone R1_trust {
+        from-zone trust to-zone trust {
             policy default-permit {
                 match {
                     source-address any;
@@ -92,8 +86,24 @@ security {
         }
     }
     zones {
-        security-zone R1_trust {
+        security-zone trust {
+            host-inbound-traffic {
+            /* Global for all interfaces */
+                system-services {
+                    ping;
+                }
+            }
             interfaces {
+                lo0 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                        }
+                        protocols {
+                            ospf;
+                        }
+                    }
+                }
                 ge-0/0/1.0 {
                     host-inbound-traffic {
                         system-services {
@@ -121,13 +131,6 @@ security {
                         }
                         protocols {
                             ospf;
-                        }
-                    }
-                }
-                lo0.0 {
-                    host-inbound-traffic {
-                        system-services {
-                            ping;
                         }
                     }
                 }
