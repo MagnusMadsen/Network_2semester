@@ -1,5 +1,5 @@
 ## Assignment 49 OSPF routing protocol
-/* Magnus */
+/* Daniel */
 version 12.1X47-D15.4;
 system {
     host-name R1;
@@ -20,8 +20,16 @@ interfaces {
     ge-0/0/2 {
         unit 0 {
             family inet {
-                /* Lan6 */
+                /* Lan5 */
                 address 10.10.10.1/28;
+            }
+        }
+    }
+    ge-0/0/3 {
+        unit 0 {
+            family inet {
+                /* Lan1 */
+                address 192.168.13.1/24;
             }
         }
     }
@@ -35,15 +43,33 @@ interfaces {
 }
 protocols {
     ospf {
-        router-id 192.168.100.1;
+        export route-to-USERLAN1;
+        /* router-id 192.168.100.1; */
         area 0.0.0.0 {
-            interface ge-0/0/1.0 {
+            interface lo0;
+            interface ge-0/0/1.0 interface-type p2p;
+            interface ge-0/0/2.0 interface-type p2p;
+        }
+    }
+}            
+/* Passive OSPF on lo0 so it is advertised but not used for adjacencies {
                 interface-type p2p;
             }
             interface ge-0/0/2.0 {
                 interface-type p2p;
             }
             interface lo0.0;
+        }
+    }
+}
+*/
+policy-options {
+    policy-statement route-to-USERLAN1 {
+        term accept-route-to-USERLAN1 {
+            from {
+                route-filter 192.168.13.0/24 exact;
+            }
+            then accept;
         }
     }
 }
@@ -77,6 +103,16 @@ security {
                     }
                 }
                 ge-0/0/2.0 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                        }
+                        protocols {
+                            ospf;
+                        }
+                    }
+                }
+                ge-0/0/3.0 {
                     host-inbound-traffic {
                         system-services {
                             ping;
