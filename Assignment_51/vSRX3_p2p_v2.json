@@ -1,5 +1,5 @@
-## Assignment 49 OSPF routing protocol
-/* Daniel */
+## OSPF assignment 51
+/* By Per Dahlstroem. */
 version 12.1X47-D15.4;
 system {
     host-name R3;
@@ -12,7 +12,7 @@ interfaces {
     ge-0/0/1 {
         unit 0 {
             family inet {
-                /* Lan10 p2p*/
+                /* Lan10 */
                 address 10.10.12.1/28;
             }
         }
@@ -20,7 +20,7 @@ interfaces {
     ge-0/0/2 {
         unit 0 {
             family inet {
-                /* Lan6 p2p*/
+                /* Lan6 */
                 address 10.10.11.1/28;
             }
         }
@@ -28,26 +28,48 @@ interfaces {
     ge-0/0/3 {
         unit 0 {
             family inet {
-                /* Lan2 */
-                address 192.168.15.1/24
+                /* USERLAN3 */
+                address 192.168.15.1/24;
+            }
+        }
+    }
+    lo0 {
+        unit 0 {
+            family inet {
+                address 192.168.100.3/32;
             }
         }
     }
 }
 protocols {
     ospf {
+        export my-route-to-USERLAN3;
         area 0.0.0.0 {
-        /* Make the interface make a point to point connection */
+            interface lo0;
             interface ge-0/0/1.0 interface-type p2p;
-        /* Make the interface make a point to point connection */
             interface ge-0/0/2.0 interface-type p2p;
+        }
+    }
+}
+policy-options {
+    policy-statement my-route-to-USERLAN3 {
+        term accept-my-route-to-USERLAN3 {
+            from {
+                /* route-filter destination-prefix/prefix-length match-type */  
+                /* match type exampkes: */
+                /* exact subnet mask */
+                /* orlonger subnet mask */
+                /* longer subnet mask */
+                /* upto subnet mask */
+                route-filter 192.168.15.0/24 exact;
+            }
+            then accept;
         }
     }
 }
 security {
     policies {
-        /* This policy is needed for interfaceses in the R5_trust zone to intercommunicate */
-        from-zone R5_trust to-zone R5_trust {
+        from-zone trust to-zone trust {
             policy default-permit {
                 match {
                     source-address any;
@@ -61,37 +83,38 @@ security {
         }
     }
     zones {
-        security-zone R5_trust {
+        security-zone trust {
+            host-inbound-traffic {
+            /* Global for all interfaces */
+                system-services {
+                    ping;
+                }
+            }
             interfaces {
+                lo0 {
+                    host-inbound-traffic {
+                        protocols {
+                            ospf;
+                        }
+                    }
+                }
                 ge-0/0/1.0 {
                     host-inbound-traffic {
-                        system-services {
-                            ping;
-                        }
                         protocols {
-            /* Open this interface up for participation in OSPF */
                             ospf;
                         }
                     }
                 }
                 ge-0/0/2.0 {
                     host-inbound-traffic {
-                        system-services {
-                            ping;
-                        }
                         protocols {
-            /* Open this interface up for participation in OSPF */
                             ospf;
                         }
                     }
                 }
                 ge-0/0/3.0 {
                     host-inbound-traffic {
-                        system-services {
-                            ping;
-                        }
                         protocols {
-            /* Open this interface up for participation in OSPF */
                             ospf;
                         }
                     }
