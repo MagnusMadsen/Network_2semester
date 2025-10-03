@@ -1,0 +1,194 @@
+## Assignment 49 OSPF routing protocol
+/* Daniel */
+version 12.1X47-D15.4;
+system {
+    host-name R1;
+    /* User: root Password: Rootpass */
+    root-authentication {
+        encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";
+    }
+}
+interfaces {
+    ge-0/0/1 {
+        unit 0 {
+            family inet {
+                /* Lan10 */
+                address 10.10.12.2/28;
+            }
+        }
+    }
+    ge-0/0/2 {
+        unit 0 {
+            family inet {
+                /* Lan5 */
+                address 10.10.10.1/28;
+            }
+        }
+    }
+    ge-0/0/3 {
+        unit 0 {
+            family inet {
+                /* Lan1 */
+                address 192.168.13.1/24;
+            }
+        }
+    }
+    ge-0/0/4 {
+        unit 0 {
+            family inet {
+                /* LabLan / WAN */
+                address 10.56.16.81/22;
+            }
+        }
+    }
+    lo0 { 
+        unit 0 { 
+            family inet { 
+                address 192.168.100.1/32;
+            }
+        }
+    }
+}
+routing-options {
+    static {  
+        route 0.0.0.0/0 next-hop 10.56.16.1;
+    }
+}
+protocols {
+    ospf {
+        export route-to-USERLAN1;
+        export route-to-Internet;
+        area 0.0.0.0 {
+            interface lo0.0;
+            interface ge-0/0/1.0 interface-type p2p;
+            interface ge-0/0/2.0;
+        }
+    }
+}            
+policy-options {
+    policy-statement route-to-USERLAN1 {
+        term accept-route-to-USERLAN1 {
+            from {
+                route-filter 192.168.13.0/24 exact;
+            }
+            then accept;
+        }
+    }
+    policy-statement route-to-Internet {
+        term accept-route-to-Internet {
+            from {
+                protocol static;
+                route-filter 0.0.0.0/0 exact;
+            }
+            then accept;
+        }
+    }
+}
+security {
+    nat {
+        source {
+            rule-set NAT-TO-INTERNET {
+                from zone R1_trust;
+                to zone R1_untrust;
+                rule NAT-LAN10 {
+                    match {
+                        source-address 10.10.12.0/28;
+                    }
+                    then {
+                        source-nat {
+                            interface;
+                        }
+                    }
+                }
+                rule NAT-LAN5 {
+                    match {
+                        source-address 10.10.10.0/28;
+                    }
+                    then {
+                        source-nat {
+                            interface;
+                        }
+                    }
+                }
+                rule NAT-LAN1 {
+                    match {
+                        source-address 192.168.13.0/24;
+                        source-address 192.168.14.0/24;
+                        source-address 192.168.15.0/24;
+                    }
+                    then {
+                        source-nat {
+                            interface;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    policies {
+        /* Trust → Internet */
+        from-zone R1_trust to-zone R1_untrust {
+            policy trust-to-internet {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        /* Interne net må tale sammen */
+        from-zone R1_trust to-zone R1_trust {
+            policy default-permit {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+    zones {
+        security-zone R1_trust {
+            interfaces {
+                ge-0/0/1.0 {
+                    host-inbound-traffic {
+                        system-services { ping; }
+                        protocols { ospf; }
+                    }
+                }
+                ge-0/0/2.0 {
+                    host-inbound-traffic {
+                        system-services { ping; }
+                        protocols { ospf; }
+                    }
+                }
+                ge-0/0/3.0 {
+                    host-inbound-traffic {
+                        system-services { ping; }
+                        protocols { ospf; }
+                    }
+                }
+                lo0.0 {
+                    host-inbound-traffic {
+                        system-services { ping; }
+                    }
+                }
+            }
+        }
+        security-zone R1_untrust {
+            interfaces {
+                ge-0/0/4.0 {
+                    host-inbound-traffic {
+                        system-services { ping; }
+                    }
+                }
+            }
+        }
+    }
+}

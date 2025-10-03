@@ -1,0 +1,125 @@
+## OSPF assignment 51
+/* By Per Dahlstroem. */
+version 12.1X47-D15.4;
+system {
+    host-name R2;
+    /* User: root Password: Rootpass */
+    root-authentication {
+        encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";
+    }
+}
+interfaces {
+    ge-0/0/1 {
+        unit 0 {
+            family inet {
+                /* Lan10 */
+                address 10.10.10.2/28;
+            }
+        }
+    }
+    ge-0/0/2 {
+        unit 0 {
+            family inet {
+                /* Lan6 */
+                address 10.10.11.2/28;
+            }
+        }
+    }
+    ge-0/0/3 {
+        unit 0 {
+            family inet {
+                /* USERLAN3 */
+                address 192.168.14.1/24;
+            }
+        }
+    }
+    lo0 {
+        unit 0 {
+            family inet {
+                address 192.168.100.2/32;
+            }
+        }
+    }
+}
+protocols {
+    ospf {
+        export my-route-to-USERLAN2;
+        area 0.0.0.0 {
+            interface lo0;
+            interface ge-0/0/1.0;
+            interface ge-0/0/2.0;
+        }
+    }
+}
+policy-options {
+    policy-statement my-route-to-USERLAN2 {
+        term accept-my-route-to-USERLAN2 {
+            from {
+                /* route-filter destination-prefix/prefix-length match-type */  
+                /* match type exampkes: */
+                /* exact subnet mask */
+                /* orlonger subnet mask */
+                /* longer subnet mask */
+                /* upto subnet mask */
+                route-filter 192.168.14.0/24 exact;
+            }
+            then accept;
+        }
+    }
+}
+security {
+    policies {
+        from-zone trust to-zone trust {
+            policy default-permit {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+    zones {
+        security-zone trust {
+            host-inbound-traffic {
+            /* Global for all interfaces */
+                system-services {
+                    ping;
+                }
+            }
+            interfaces {
+                lo0 {
+                    host-inbound-traffic {
+                        protocols {
+                            ospf;
+                        }
+                    }
+                }
+                ge-0/0/1.0 {
+                    host-inbound-traffic {
+                        protocols {
+                            ospf;
+                        }
+                    }
+                }
+                ge-0/0/2.0 {
+                    host-inbound-traffic {
+                        protocols {
+                            ospf;
+                        }
+                    }
+                }
+                ge-0/0/3.0 {
+                    host-inbound-traffic {
+                        protocols {
+                            ospf;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
