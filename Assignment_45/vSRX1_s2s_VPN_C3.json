@@ -1,7 +1,7 @@
 version 12.1X46-D30.2;
 /* Lex - srxC3 */
 system {
-    host-name SRX-B;
+    host-name srxC3;
     root-authentication {
         encrypted-password "$1$4TkbZDtp$6E8C6Bg7K6gnHR31XnJjl0"; ## SECRET-DATA
     }
