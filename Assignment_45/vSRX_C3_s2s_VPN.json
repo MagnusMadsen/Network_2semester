@@ -49,7 +49,7 @@ security {
         policy IKE-POL {
             mode main;
             proposals IKE-PROP;
-            pre-shared-key ascii-text "$1$4TkbZDtp$6E8C6Bg7K6gnHR31XnJjl0";
+            pre-shared-key ascii-text juniper;
         }
         gateway IKE-GW {
             ike-policy IKE-POL;
@@ -128,10 +128,8 @@ security {
         security-zone trust {
             host-inbound-traffic {
                 system-services {
-                    all;
-                }
-                protocols {
-                    all;
+                    ping;
+                    traceroute;
                 }
             }
             interfaces {
@@ -139,28 +137,19 @@ security {
             }
         }
         security-zone untrust {
-            host-inbound-traffic {
-                system-services {
-                    ike;
-                    ping;
-                }
-            }
             interfaces {
                 ge-0/0/3.0 {
                     host-inbound-traffic {
                         system-services {
-                            all;
+                            ike;
+                            ping;
+                            traceroute;
                         }
                     }
                 }
             }
         }
         security-zone VPN {
-            host-inbound-traffic {
-                system-services {
-                    all;
-                }
-            }
             interfaces {
                 st0.1;
             }
