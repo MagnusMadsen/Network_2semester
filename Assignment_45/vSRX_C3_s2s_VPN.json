@@ -20,7 +20,7 @@ interfaces {
     ge-0/0/3 {
         unit 0 {
             family inet {
-                address 10.3.3.1/24;  # Link til INET
+                address 10.3.3.1/24;
             }
         }
     }
@@ -33,17 +33,10 @@ interfaces {
 routing-options {
     static {
         route 10.2.2.0/24 next-hop st0.1;
-        // route 10.1.1.0/24 next-hop st0.1;
         route 0.0.0.0/0 next-hop 10.3.3.2;  # INET
     }
 }
-security {
-    zones {
-        security-zone trust { interfaces { ge-0/0/2.0; } }
-        security-zone untrust { interfaces { ge-0/0/3.0; } }
-        security-zone VPN { interfaces { st0.1; } }
-    }
-}
+
 security {
     ike {
         proposal IKE-PROP {
@@ -89,7 +82,6 @@ security {
     }
     address-book {
         global {
-            // address Network-A 10.4.4.0/24;
             address Network-B 10.1.1.0/24;
             address Network-A 10.2.2.0/24;
         }
@@ -110,8 +102,8 @@ security {
         from-zone trust to-zone VPN {
             policy trust-to-VPN {
                 match {
-                    source-address Network-A;
-                    destination-address Network-B;
+                    source-address Network-B;
+                    destination-address Network-A;
                     application any;
                 }
                 then {
@@ -122,8 +114,8 @@ security {
         from-zone VPN to-zone trust {
             policy VPN-to-trust {
                 match {
-                    source-address Network-B;
-                    destination-address Network-A;
+                    source-address Network-A;
+                    destination-address Network-B;
                     application any;
                 }
                 then {
