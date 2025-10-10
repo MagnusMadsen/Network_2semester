@@ -20,18 +20,20 @@ interfaces {
     ge-0/0/3 {
         unit 0 {
             family inet {
-                address 10.4.4.1/24;  # Link til INET
+                address 10.4.4.1/24;
             }
         }
     }
     st0 {
-        unit 1 { family inet; }
+        unit 1 { 
+            family inet; 
+        }
     }
 }
 routing-options {
     static {
         route 10.1.1.0/24 next-hop st0.1;
-        route 0.0.0.0/0 next-hop 10.4.4.1;  # INET
+        route 0.0.0.0/0 next-hop 10.4.4.2;  # INET
     }
 }
 security {
@@ -79,7 +81,6 @@ security {
     }
     address-book {
         global {
-            // address Network-A 10.3.3.0/24;
             address Network-B 10.1.1.0/24;
             address Network-A 10.2.2.0/24;
         }
