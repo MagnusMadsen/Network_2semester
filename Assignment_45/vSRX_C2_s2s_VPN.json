@@ -1,5 +1,6 @@
+kan du ikke rette syntax error?
 version 12.1X46-D30.2;
-/* Daniel SRX-B */
+/* Daniel srxC2*/
 system {
     host-name SRX-B;
     root-authentication {
@@ -20,26 +21,28 @@ interfaces {
     ge-0/0/3 {
         unit 0 {
             family inet {
-                address 10.4.4.2/30;  # Link til INET
+                address 10.4.4.1/24;  # Link til INET
             }
         }
     }
     st0 {
-        unit 1 {
-            family inet {
-                address 192.168.100.2/30;  # Tunnel IP
-            }
-        }
+        unit 1 { family inet; }
     }
 }
 routing-options {
     static {
-        route 10.1.1.0/24 next-hop 192.168.100.1;   # Tunnel peer
-        route 0.0.0.0/0 next-hop 10.4.4.1;          # INET default route
+        route 10.1.1.0/24 next-hop st0.1;
+        // route 10.2.2.0/24 next-hop st0.1;
+        route 0.0.0.0/0 next-hop 10.4.4.1;  # INET
     }
 }
 
 security {
+//     zones {
+//         security-zone trust { interfaces { ge-0/0/2.0; } }
+//         security-zone untrust { interfaces { ge-0/0/3.0; } }
+//         security-zone VPN { interfaces { st0.1; } }
+//     }
     ike {
         proposal IKE-PROP {
             authentication-method pre-shared-keys;
@@ -51,15 +54,14 @@ security {
         policy IKE-POL {
             mode main;
             proposals IKE-PROP;
-            pre-shared-key ascii-text "$9$8eBx-woJDmfzYgfz36u0LxN"; ## SECRET-DATA
+            pre-shared-key ascii-text "$9$8eBx-woJDmfzYgfz36u0LxN"; ## SECRET-DATA (same as peer)
         }
         gateway IKE-GW {
             ike-policy IKE-POL;
-            address 10.3.3.1;                      # SRX-A public IP
+            address 10.3.3.1;
             external-interface ge-0/0/3.0;
         }
     }
-
     ipsec {
         proposal IPSEC-PROP {
             protocol esp;
@@ -75,6 +77,7 @@ security {
         }
         vpn IPSEC-VPN {
             bind-interface st0.1;
+            vpn-monitor;
             ike {
                 gateway IKE-GW;
                 ipsec-policy IPSEC-POL;
@@ -82,14 +85,13 @@ security {
             establish-tunnels immediately;
         }
     }
-
     address-book {
         global {
-            address Network-A 10.1.1.0/24;
-            address Network-B 10.2.2.0/24;
+            // address Network-A 10.3.3.0/24;
+            address Network-B 10.1.1.0/24;
+            address Network-A 10.2.2.0/24;
         }
     }
-
     policies {
         from-zone trust to-zone untrust {
             policy trust-to-untrust {
@@ -103,22 +105,8 @@ security {
                 }
             }
         }
-
         from-zone trust to-zone VPN {
             policy trust-to-VPN {
-                match {
-                    source-address Network-B;
-                    destination-address Network-A;
-                    application any;
-                }
-                then {
-                    permit;
-                }
-            }
-        }
-
-        from-zone VPN to-zone trust {
-            policy VPN-to-trust {
                 match {
                     source-address Network-A;
                     destination-address Network-B;
@@ -129,8 +117,19 @@ security {
                 }
             }
         }
+        from-zone VPN to-zone trust {
+            policy VPN-to-trust {
+                match {
+                    source-address Network-B;
+                    destination-address Network-A;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
     }
-
     zones {
         security-zone trust {
             host-inbound-traffic {
@@ -145,7 +144,6 @@ security {
                 ge-0/0/2.0;
             }
         }
-
         security-zone untrust {
             host-inbound-traffic {
                 system-services {
@@ -154,10 +152,15 @@ security {
                 }
             }
             interfaces {
-                ge-0/0/3.0;
+                ge-0/0/3.0 {
+                    host-inbound-traffic {
+                        system-services {
+                            all;
+                        }
+                    }
+                }
             }
         }
-
         security-zone VPN {
             host-inbound-traffic {
                 system-services {
