@@ -1,5 +1,5 @@
 version 12.1X46-D30.2;
-/* Lex - srx1 */
+/* Lex - srxC3 */
 system {
     host-name SRX-B;
     root-authentication {
@@ -20,7 +20,7 @@ interfaces {
     ge-0/0/3 {
         unit 0 {
             family inet {
-                address 10.3.3.1/30;  # Link til INET
+                address 10.3.3.1/24;  # Link til INET
             }
         }
     }
@@ -33,21 +33,15 @@ interfaces {
 routing-options {
     static {
         route 10.2.2.0/24 next-hop st0.1;
-        route 10.1.1.0/24 next-hop st0.1;
+        // route 10.1.1.0/24 next-hop st0.1;
         route 0.0.0.0/0 next-hop 10.3.3.2;  # INET
     }
 }
 security {
     zones {
-        security-zone trust {
-            interfaces { ge-0/0/2.0; }
-        }
-        security-zone untrust {
-            interfaces { ge-0/0/3.0; }
-        }
-        security-zone VPN {
-            interfaces { st0.1; }
-        }
+        security-zone trust { interfaces { ge-0/0/2.0; } }
+        security-zone untrust { interfaces { ge-0/0/3.0; } }
+        security-zone VPN { interfaces { st0.1; } }
     }
 }
 security {
@@ -62,7 +56,7 @@ security {
         policy IKE-POL {
             mode main;
             proposals IKE-PROP;
-            pre-shared-key ascii-text "$9$8eBx-woJDmfzYgfz36u0LxN"; ## SECRET-DATA (same as peer)
+            pre-shared-key ascii-text "$1$4TkbZDtp$6E8C6Bg7K6gnHR31XnJjl0"; ## SECRET-DATA (same as peer)
         }
         gateway IKE-GW {
             ike-policy IKE-POL;
@@ -95,9 +89,9 @@ security {
     }
     address-book {
         global {
-            address Network-A 10.4.4.0/24;
+            // address Network-A 10.4.4.0/24;
             address Network-B 10.1.1.0/24;
-            address Network-C 10.2.2.0/24;
+            address Network-A 10.2.2.0/24;
         }
     }
     policies {

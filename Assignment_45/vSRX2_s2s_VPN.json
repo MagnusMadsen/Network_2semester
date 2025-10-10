@@ -49,7 +49,7 @@ security {
         policy IKE-POL {
             mode main;
             proposals IKE-PROP;
-            pre-shared-key ascii-text "$9$8eBx-woJDmfzYgfz36u0LxN"; ## SECRET-DATA (same as peer)
+            pre-shared-key ascii-text "$1$4TkbZDtp$6E8C6Bg7K6gnHR31XnJjl0"; ## SECRET-DATA (same as peer)
         }
         gateway IKE-GW {
             ike-policy IKE-POL;
