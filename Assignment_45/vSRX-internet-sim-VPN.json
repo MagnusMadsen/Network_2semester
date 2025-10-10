@@ -1,33 +1,102 @@
-version 12.1X46-D30.2;
-/* INET Router */
+/* By Thorstein Pedersen */
+/* Middle router DHCP Site-2-Site VPN */
+version 12.1X47-D15.4;
 system {
-    host-name INET;
+    host-name SRX_C4;
+    time-zone Europe/Berlin;
+    /* User: root Password: Rootpass */
     root-authentication {
-        encrypted-password "$1$4TkbZDtp$6E8C6Bg7K6gnHR31XnJjl0"; ## Samme root-pass som de andre
+        encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";
     }
-    services {
+	services {
         ssh;
-        telnet;
+        dhcp-local-server {
+            group Net4 {
+                interface ge-0/0/1.0;
+            }
+        }
     }
 }
-
 interfaces {
     ge-0/0/1 {
         unit 0 {
-             family inet 
-             { address 10.3.3.2/24; }
+            family inet {
+                address 10.3.3.2/24;
             }
+        }
     }
     ge-0/0/2 {
         unit 0 {
-            family inet
-            { address 10.4.4.2/24; } 
+            family inet {
+                address 10.4.4.2/24;
+            }
         }
     }
 }
 routing-options {
     static {
-        route 10.3.3.2/24 next-hop 10.1.1.1;
-        route 10.4.4.2/24 next-hop 10.2.2.1;
+        route 10.1.1.0/24 next-hop 10.3.3.1;
+        route 10.2.2.0/24 next-hop 10.4.4.1;
+    }
+}
+security {
+    policies {
+        from-zone trust to-zone trust {
+            policy trust-to-trust {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+    zones {
+        security-zone trust {
+            interfaces {
+                ge-0/0/1.0 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                            traceroute;
+                            dhcp;
+                        }
+                    }
+                }
+                ge-0/0/2.0 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                            traceroute;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+access {
+    address-assignment {
+        pool Net4 {
+            family inet {
+                network 10.3.3.0/24;
+                range USERS {
+                    low 10.3.3.15;
+                    high 10.3.3.20;
+                }
+                dhcp-attributes {
+                    maximum-lease-time 600; /* seconds */
+                    name-server {
+                        8.8.8.8;
+                    }
+                    router {
+                        10.3.3.2;
+                    }
+                }
+            }
+        }
     }
 }
