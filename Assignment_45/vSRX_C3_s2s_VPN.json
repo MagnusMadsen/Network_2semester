@@ -126,14 +126,15 @@ security {
     }
     zones {
         security-zone trust {
-            host-inbound-traffic {
-                system-services {
-                    ping;
-                    traceroute;
-                }
-            }
             interfaces {
-                ge-0/0/2.0;
+                ge-0/0/2.0; {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                            traceroute;
+                        }
+                    }
+                }
             }
         }
         security-zone untrust {
