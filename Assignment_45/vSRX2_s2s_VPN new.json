@@ -1,5 +1,5 @@
 version 12.1X46-D30.2;
-/* Daniel srxC2*/
+/* Daniel SRX-B */
 system {
     host-name SRX-B;
     root-authentication {
@@ -20,20 +20,25 @@ interfaces {
     ge-0/0/3 {
         unit 0 {
             family inet {
-                address 10.4.4.1/24;  # Link til INET
+                address 10.4.4.2/30;  # Link til INET
             }
         }
     }
     st0 {
-        unit 1 { family inet; }
+        unit 1 {
+            family inet {
+                address 192.168.100.2/30;  # Tunnel IP
+            }
+        }
     }
 }
 routing-options {
     static {
-        route 10.1.1.0/24 next-hop st0.1;
-        route 0.0.0.0/0 next-hop 10.4.4.1;  # INET
+        route 10.1.1.0/24 next-hop 192.168.100.1;   # Tunnel peer
+        route 0.0.0.0/0 next-hop 10.4.4.1;          # INET default route
     }
 }
+
 security {
     ike {
         proposal IKE-PROP {
@@ -46,11 +51,11 @@ security {
         policy IKE-POL {
             mode main;
             proposals IKE-PROP;
-            pre-shared-key ascii-text "$1$4TkbZDtp$6E8C6Bg7K6gnHR31XnJjl0"; ## SECRET-DATA (same as peer)
+            pre-shared-key ascii-text "$1$4TkbZDtp$6E8C6Bg7K6gnHR31XnJjl0"; ## SECRET-DATA
         }
         gateway IKE-GW {
             ike-policy IKE-POL;
-            address 10.3.3.1;
+            address 10.3.3.1;                      # SRX-A public IP
             external-interface ge-0/0/3.0;
         }
     }
@@ -69,7 +74,6 @@ security {
         }
         vpn IPSEC-VPN {
             bind-interface st0.1;
-            vpn-monitor;
             ike {
                 gateway IKE-GW;
                 ipsec-policy IPSEC-POL;
@@ -77,13 +81,14 @@ security {
             establish-tunnels immediately;
         }
     }
+
     address-book {
         global {
-            // address Network-A 10.3.3.0/24;
-            address Network-B 10.1.1.0/24;
-            address Network-A 10.2.2.0/24;
+            address Network-A 10.1.1.0/24;
+            address Network-B 10.2.2.0/24;
         }
     }
+
     policies {
         from-zone trust to-zone untrust {
             policy trust-to-untrust {
@@ -97,20 +102,9 @@ security {
                 }
             }
         }
+
         from-zone trust to-zone VPN {
             policy trust-to-VPN {
-                match {
-                    source-address Network-A;
-                    destination-address Network-B;
-                    application any;
-                }
-                then {
-                    permit;
-                }
-            }
-        }
-        from-zone VPN to-zone trust {
-            policy VPN-to-trust {
                 match {
                     source-address Network-B;
                     destination-address Network-A;
@@ -121,7 +115,21 @@ security {
                 }
             }
         }
+
+        from-zone VPN to-zone trust {
+            policy VPN-to-trust {
+                match {
+                    source-address Network-A;
+                    destination-address Network-B;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
     }
+
     zones {
         security-zone trust {
             host-inbound-traffic {
@@ -136,6 +144,7 @@ security {
                 ge-0/0/2.0;
             }
         }
+
         security-zone untrust {
             host-inbound-traffic {
                 system-services {
@@ -144,15 +153,10 @@ security {
                 }
             }
             interfaces {
-                ge-0/0/3.0 {
-                    host-inbound-traffic {
-                        system-services {
-                            all;
-                        }
-                    }
-                }
+                ge-0/0/3.0;
             }
         }
+
         security-zone VPN {
             host-inbound-traffic {
                 system-services {
