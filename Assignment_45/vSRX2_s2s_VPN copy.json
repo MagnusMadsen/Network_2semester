@@ -20,21 +20,26 @@ interfaces {
     ge-0/0/3 {
         unit 0 {
             family inet {
-                address 10.4.4.1/30;
+                address 10.4.4.2/30;  # Link til INET
             }
         }
     }
     st0 {
-        unit 1 {
-            family inet;
-        }
+        unit 1 { family inet; }
     }
 }
 routing-options {
     static {
         route 10.1.1.0/24 next-hop st0.1;
         route 10.2.2.0/24 next-hop st0.1;
-        route 0.0.0.0/0 next-hop 10.4.4.2;
+        route 0.0.0.0/0 next-hop 10.4.4.1;  # INET
+    }
+}
+security {
+    zones {
+        security-zone trust { interfaces { ge-0/0/2.0; } }
+        security-zone untrust { interfaces { ge-0/0/3.0; } }
+        security-zone VPN { interfaces { st0.1; } }
     }
 }
 security {
