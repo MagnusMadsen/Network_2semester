@@ -1,5 +1,5 @@
 version 12.1X46-D30.2;
-/* Lex - srxC3 */
+/* Lex - srx3 */
 system {
     host-name srxC3;
     root-authentication {

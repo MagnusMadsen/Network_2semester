@@ -1,5 +1,5 @@
 version 12.1X46-D30.2;
-/* Daniel srxC2*/
+/* Daniel srx1 */
 system {
     host-name SRX-B;
     root-authentication {
