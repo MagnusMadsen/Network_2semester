@@ -1,4 +1,3 @@
-/* By Thorstein Pedersen */
 /* Middle router DHCP Site-2-Site VPN */
 version 12.1X47-D15.4;
 system {
