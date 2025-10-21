@@ -1,7 +1,7 @@
 version 12.1X46-D30.2;
-/* Lex - srx3 */
+/* Daniel srx3 */
 system {
-    host-name srxC3;
+    host-name SRX-B;
     root-authentication {
         encrypted-password "$1$4TkbZDtp$6E8C6Bg7K6gnHR31XnJjl0"; ## SECRET-DATA
     }
@@ -13,30 +13,29 @@ interfaces {
     ge-0/0/2 {
         unit 0 {
             family inet {
-                address 10.1.1.1/24;
+                address 10.2.2.1/24;
             }
         }
     }
     ge-0/0/3 {
         unit 0 {
             family inet {
-                address 10.3.3.1/24;
+                address 10.4.4.1/24;
             }
         }
     }
     st0 {
-        unit 1 {
-            family inet;
+        unit 1 { 
+            family inet; 
         }
     }
 }
 routing-options {
     static {
-        route 10.2.2.0/24 next-hop st0.1;
-        route 0.0.0.0/0 next-hop 10.3.3.2;  # INET
+        route 10.1.1.0/24 next-hop st0.1;
+        route 0.0.0.0/0 next-hop 10.4.4.2;  # INET
     }
 }
-
 security {
     ike {
         proposal IKE-PROP {
@@ -53,7 +52,7 @@ security {
         }
         gateway IKE-GW {
             ike-policy IKE-POL;
-            address 10.4.4.1;
+            address 10.3.3.1;
             external-interface ge-0/0/3.0;
         }
     }
@@ -102,8 +101,8 @@ security {
         from-zone trust to-zone VPN {
             policy trust-to-VPN {
                 match {
-                    source-address Network-B;
-                    destination-address Network-A;
+                    source-address Network-A;
+                    destination-address Network-B;
                     application any;
                 }
                 then {
@@ -114,8 +113,8 @@ security {
         from-zone VPN to-zone trust {
             policy VPN-to-trust {
                 match {
-                    source-address Network-A;
-                    destination-address Network-B;
+                    source-address Network-B;
+                    destination-address Network-A;
                     application any;
                 }
                 then {
@@ -158,6 +157,9 @@ security {
         security-zone VPN {
             host-inbound-traffic {
                 system-services {
+                    all;
+                }
+                protocols {
                     all;
                 }
             }

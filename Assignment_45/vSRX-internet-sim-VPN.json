@@ -2,11 +2,11 @@
 /* Middle router DHCP Site-2-Site VPN */
 version 12.1X47-D15.4;
 system {
-    host-name SRX_C4;
+    host-name SRX_middle;
     time-zone Europe/Berlin;
     /* User: root Password: Rootpass */
     root-authentication {
-        encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";
+        encrypted-password "$1$4TkbZDtp$6E8C6Bg7K6gnHR31XnJjl0";
     }
 	services {
         ssh;
