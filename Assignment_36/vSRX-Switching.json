@@ -1,0 +1,59 @@
+## Last changed: 2025-02-21 10:23:44 UTC
+version 12.1X46-D30.2;
+/* Two VLANS: Magnus og Daniel */
+/* By Magnus */
+system {
+    host-name SRXC1;
+    root-authentication {
+        /* User: root Password: Rootpass */
+        encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";
+    }
+}
+interfaces {
+    /* Magnus */
+    ge-0/0/1 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members Magnus;
+                }
+            }
+        }
+    }
+    ge-0/0/2 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members Magnus;
+                }
+            }
+        }
+    }
+    /* Daniel */
+    ge-0/0/3 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members Daniel;
+                }
+            }
+        }
+    }
+    ge-0/0/4 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members Daniel;
+                }
+            }
+        }
+    }
+}
+vlans {
+     Magnus {
+        vlan-id 20;
+    }
+    Daniel {
+        vlan-id 10;
+    }
+}
