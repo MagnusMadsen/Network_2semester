@@ -1,0 +1,310 @@
+/* Assignment 34 */
+/* Small Office Home Office - SOHO configuration */
+/* Source nat for USERLAN */
+/* Destination nat for WebServer on 192.168.2.10 ge-0/0/2 DMZ */
+/* Two L2-Switches */
+/* By Per Dahlstroem */
+version 12.1X47-D15.4;
+system {
+    host-name R2;
+    /* User: root Password: Rootpass */
+    root-authentication {
+        encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";
+    }
+    services {
+        ssh;
+        /* dhcp service for USERLAN Legacy configuration */
+        dhcp {
+            vlan-id 3 {
+                192.168.1.1; /* Default Gateway */
+            }
+            pool 192.168.1.0/24 { /* Serve DHCP to this network. */
+                address-range low 192.168.1.10 high 192.168.1.20;
+                maximum-lease-time 3600;
+                default-lease-time 3600;
+                name-server {
+                    8.8.8.8; /* DNS server */
+                }
+            }
+        }
+    }
+}
+interfaces {
+    /* USERLAN */
+    ge-0/0/1 {
+        unit 0 {
+            family inet {
+                address 192.168.1.1/24;
+            }
+        }
+    }
+    /* Interface for DMZ */
+    ge-0/0/2 {
+        unit 0 {
+            family inet {
+                address 192.168.2.1/24;
+            }
+        }
+    }
+    /* LabLan */
+    ge-0/0/3 {
+        unit 0 {
+            family inet {
+                address 10.56.16.80/22;
+            }
+        }
+    }
+    /* Switch 1 */  
+    ge-0/0/5 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members userVlan;
+                }
+            }
+        }
+    }
+    ge-0/0/6 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members userVlan;
+                }
+            }
+        }
+    }
+    ge-0/0/7 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members userVlan;
+                }
+            }
+        }
+    }
+    /* Switch 2 */
+    ge-0/0/10 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members ServerVlan;
+                }
+            }
+        }
+    }
+    ge-0/0/11 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members ServerVlan;
+                }
+            }
+        }
+    }
+    ge-0/0/12 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members ServerVlan;
+                }
+            }
+        }
+    }
+}
+vlans {
+    userVlan {
+        vlan-id 3; /* id number is randomly chosen */
+    }
+    ServerVlan {
+        vlan-id 4; /* id number is randomly chosen */
+    }
+}
+routing-options {
+    /* Default route to school gateway */
+    static {
+        route 0.0.0.0/0 next-hop 10.56.16.1;
+    }
+}
+security {
+    nat {
+        source {
+            rule-set DMZ-to-untrust {
+                from zone DMZ;
+                to zone untrust;
+                rule DMZ-rule-any-to-any {
+                    match {
+                        source-address 0.0.0.0/0;
+                        destination-address 0.0.0.0/0;
+                    }
+                    then {
+                        source-nat {
+                            interface;
+                        }
+                    }
+                }
+            }
+        }
+        source {
+            rule-set USERLAN-to-untrust {
+                from zone USERLAN;
+                to zone untrust;
+                rule rule-any-to-any {
+                    match {
+                        source-address 0.0.0.0/0;
+                        destination-address 0.0.0.0/0;
+                    }
+                    then {
+                        source-nat {
+                            interface;
+                        }
+                    }
+                }
+            }
+        }
+        destination {
+            pool myWebServer {
+                address 192.168.2.10/32;
+            }
+            rule-set myDestinationRuleSet {
+                from zone untrust;
+                rule myRuleToWebServer {
+                    match {
+                        destination-address 10.56.16.80/32;
+                        destination-port {
+                            80;
+                        }
+                    }
+                    then {
+                        destination-nat {
+                            pool {
+                                myWebServer;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    policies {
+        from-zone USERLAN to-zone USERLAN {
+            policy default-permit {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone USERLAN to-zone untrust {
+            policy internet-access {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone USERLAN to-zone DMZ {
+            policy internet-access {
+                match {
+                    source-address any;
+                    /* WebServer from address book */
+                    destination-address NGINX;
+                    application junos-http;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone DMZ to-zone untrust {
+            policy DMZ-internet-access {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    deny;
+                }
+            }
+        }
+        from-zone DMZ to-zone USERLAN {
+            policy DMZ-internet-access {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    deny;
+                }
+            }
+        }
+        from-zone untrust to-zone USERLAN{
+            policy deny-any{
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    deny;
+                }
+            }
+        }
+        from-zone untrust to-zone DMZ{
+            policy WebServerPolicy {
+                match {
+                    source-address any;
+                    /* WebServer from address book */
+                    destination-address NGINX;
+                    application junos-http;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+    zones {
+        security-zone USERLAN {
+            interfaces {
+                ge-0/0/1.0 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                            dhcp; /* open up in to dhcp server */
+                        }
+                    }
+                }
+            }
+        }
+        security-zone DMZ {
+            address-book {
+                address NGINX 192.168.2.10/32;
+            }
+            interfaces {
+                ge-0/0/2.0 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                        }
+                    }
+                }
+            }
+        }
+        security-zone untrust {
+            interfaces {
+                ge-0/0/3.0;
+            }
+        }
+    }
+}
+
