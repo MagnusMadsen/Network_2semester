@@ -23,7 +23,7 @@ system {
                 maximum-lease-time 3600;
                 default-lease-time 3600;
                 name-server {
-                    8.8.8.8; /* DNS server */
+                    192.168.2.2; /* DNS server */
                 }
             }
         }
@@ -74,6 +74,15 @@ interfaces {
         }
     }
     ge-0/0/7 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members userVlan;
+                }
+            }
+        }
+    }
+    ge-0/0/8 {
         unit 0 {
             family ethernet-switching {
                 vlan {
@@ -308,6 +317,14 @@ security {
                         }
                     }
 				}
+                ge-0/0/8 {
+                   host-inbound-traffic {
+                        system-services {
+                            ping;
+                            dhcp; /* open up in to dhcp server */
+                        }
+                    }
+                }
 	
 			}
 
