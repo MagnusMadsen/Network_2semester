@@ -15,7 +15,7 @@ system {
         ssh;
         /* dhcp service for USERLAN Legacy configuration */
         dhcp {
-            vlan-id 3 {
+            router {
                 192.168.1.1; /* Default Gateway */
             }
             pool 192.168.1.0/24 { /* Serve DHCP to this network. */
@@ -284,8 +284,35 @@ security {
                         }
                     }
                 }
-            }
+				ge-0/0/5 {
+					host-inbound-traffic {
+                        system-services {
+                            ping;
+                            dhcp; /* open up in to dhcp server */
+                        }
+                    }
+				}
+				ge-0/0/6 {
+					host-inbound-traffic {
+                        system-services {
+                            ping;
+                            dhcp; /* open up in to dhcp server */
+                        }
+                    }
+				}
+				ge-0/0/7 {
+					host-inbound-traffic {
+                        system-services {
+                            ping;
+                            dhcp; /* open up in to dhcp server */
+                        }
+                    }
+				}
+	
+			}
+
         }
+
         security-zone DMZ {
             address-book {
                 address NGINX 192.168.2.10/32;
