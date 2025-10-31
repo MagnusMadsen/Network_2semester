@@ -332,7 +332,7 @@ security {
 
         security-zone DMZ {
             address-book {
-                address NGINX 192.168.2.10/24;
+                address NGINX 192.168.2.2/24;
             }
             interfaces {
                 ge-0/0/2.0 {
