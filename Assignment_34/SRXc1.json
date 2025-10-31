@@ -172,7 +172,7 @@ security {
         }
         destination {
             pool myWebServer {
-                address 192.168.2.2/24;
+                address 192.168.2.2/32;
             }
             rule-set myDestinationRuleSet {
                 from zone untrust;
@@ -332,13 +332,14 @@ security {
 
         security-zone DMZ {
             address-book {
-                address NGINX 192.168.2.2/24;
+                address NGINX 192.168.2.2/32;
             }
             interfaces {
                 ge-0/0/2.0 {
                     host-inbound-traffic {
                         system-services {
                             ping;
+                            dns;
                         }
                     }
                 }
@@ -346,7 +347,14 @@ security {
         }
         security-zone untrust {
             interfaces {
-                ge-0/0/3.0;
+                ge-0/0/3.0 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                            dns;
+                        }
+                    }
+                }
             }
         }
     }
