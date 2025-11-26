@@ -1,0 +1,68 @@
+/* Two VLANS SALES and OPERATIONS */
+/* Routing and Policies and DHCP is done on SRX240-A */
+system {
+    host-name SRXA2;
+    root-authentication {
+    /* User: root Password: Rootpass */
+        encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";
+    }
+}
+interfaces {
+    /* TRUNK 802.1q the two VLANS SALES and OPERATIONS over to SRX240-A */
+    ge-0/0/2 {
+        unit 0 {
+            family ethernet-switching {
+                port-mode trunk;
+                vlan {
+                    members [ SALES OPERATIONS ]
+                }
+            }
+        }
+    }
+ /* VLAN SALES */
+    ge-0/0/4 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members SALES;
+                }
+            }
+        }
+    }
+    ge-0/0/5 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members SALES;
+                }
+            }
+        }
+    }
+    /* VLAN OPERATIONS */
+    ge-0/0/6 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members OPERATIONS;
+                }
+            }
+        }
+    }
+    ge-0/0/7 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members OPERATIONS;
+                }
+            }
+        }
+    }
+}
+vlans {    
+    SALES {
+        vlan-id 10;
+    }
+    OPERATIONS {
+        vlan-id 20;
+    }
+}

@@ -3,7 +3,7 @@
 /* DHCP service for VLAN OPERATIONS */
 /* Internet WAN on ge-0/0/3 */
 system {
-    host-name SRX240-A;
+    host-name SRXA1;
     root-authentication {
     /* User: root Password: Rootpass */
         encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";
@@ -24,35 +24,27 @@ system {
         }
     }
 }
+
 interfaces {
-    /* OPERATIONS 1 */
-    ge-0/0/1 {
-        unit 0 {
-            family ethernet-switching {
-                vlan {
-                    members OPERATIONS;
-                }
-            }
-        }
-    }
-    /* SALES */
-    ge-0/0/2 {
-        unit 0 {
-            family ethernet-switching {
-                vlan {
-                    members SALES;
-                }
-            }
-        }
-    }
     /* Schools network */
-    ge-0/0/3 {
+    ge-0/0/1 {
         unit 0 {
             family inet {
                 address 10.56.16.80/22;
             }
         }
+    }    
+    ge-0/0/3 {
+        unit 0 {
+            family ethernet-switching {
+                port-mode trunk;
+                vlan {
+                    members [ SALES OPERATIONS ]
+                }
+            }
+        }
     }
+    /* OPERATIONS 1 */
     ge-0/0/4 {
         unit 0 {
             family ethernet-switching {
@@ -66,17 +58,17 @@ interfaces {
         unit 0 {
             family ethernet-switching {
                 vlan {
-                    members SALES;
+                    members OPERATIONS;
                 }
             }
         }
     }
+    /* SALES */
     ge-0/0/6 {
         unit 0 {
             family ethernet-switching {
-                port-mode trunk;
                 vlan {
-                    members [ SALES OPERATIONS ]
+                    members SALES;
                 }
             }
         }
@@ -84,19 +76,19 @@ interfaces {
     ge-0/0/7 {
         unit 0 {
             family ethernet-switching {
-                port-mode trunk;
                 vlan {
-                    members [ SALES OPERATIONS ]
+                    members SALES;
                 }
             }
         }
     }
+
     vlan {
     /* Virtual interface */
         /* VLAN SALES */
         unit 5 {
             family inet {
-                address 192.168.4.1/24;
+                address 192.168.1.1/24;
                 }
             }
         /* VLAN OPERATIONS */
@@ -142,16 +134,16 @@ security {
                     application any;
                 }
                 then {
-                    deny;
+                    permit;
                 }
             }
         }
         from-zone OPERATIONS to-zone SALES {
-            policy Allow_HTTP {
+            policy Allow_hello {
                 match {
                     source-address any;
                     destination-address any;
-                    application [ junos-http junos-icmp-ping ];
+                    application any;
                 }
                 then {
                     permit;
@@ -191,7 +183,7 @@ security {
         }
         security-zone untrust {
             interfaces {
-                ge-0/0/3.0 {
+                ge-0/0/1.0 {
                 /* To allow acces to router services */
                     host-inbound-traffic {
                         system-services {
