@@ -1,0 +1,215 @@
+/* Two VLANS SALES and OPERATIONS */
+/* OPERATION can ICMP and HTTP to SALES but not vice versa */
+/* DHCP service for VLAN OPERATIONS */
+/* Internet WAN on ge-0/0/3 */
+system {
+    host-name SRX240-A;
+    root-authentication {
+    /* User: root Password: Rootpass */
+        encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";
+    }
+    services {
+        dhcp {
+            router {
+                10.1.2.1;
+            }
+            pool 10.1.2.0/24 {
+                address-range low 10.1.2.12 high 10.1.2.20;
+                maximum-lease-time 3600;
+                default-lease-time 3600;
+                name-server {
+                    8.8.8.8;
+                }
+            }
+        }
+    }
+}
+interfaces {
+    /* OPERATIONS 1 */
+    ge-0/0/1 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members OPERATIONS;
+                }
+            }
+        }
+    }
+    /* SALES */
+    ge-0/0/2 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members SALES;
+                }
+            }
+        }
+    }
+    /* Schools network */
+    ge-0/0/3 {
+        unit 0 {
+            family inet {
+                address 10.56.16.80/22;
+            }
+        }
+    }
+    ge-0/0/4 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members OPERATIONS;
+                }
+            }
+        }
+    }
+    ge-0/0/5 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members SALES;
+                }
+            }
+        }
+    }
+    ge-0/0/6 {
+        unit 0 {
+            family ethernet-switching {
+                port-mode trunk;
+                vlan {
+                    members [ SALES OPERATIONS ]
+                }
+            }
+        }
+    }
+    ge-0/0/7 {
+        unit 0 {
+            family ethernet-switching {
+                port-mode trunk;
+                vlan {
+                    members [ SALES OPERATIONS ]
+                }
+            }
+        }
+    }
+    vlan {
+    /* Virtual interface */
+        /* VLAN SALES */
+        unit 5 {
+            family inet {
+                address 192.168.4.1/24;
+                }
+            }
+        /* VLAN OPERATIONS */
+        unit 6 {
+            family inet {
+                address 10.1.2.1/24;
+                }
+            }
+        }
+}
+routing-options {
+    /* Default route to school gateway */
+    static {
+        route 0.0.0.0/0 next-hop 10.56.16.1;
+    }
+}
+security {
+    nat {
+        source {
+            rule-set OPERATIONS-to-untrust {
+                from zone OPERATIONS;
+                to zone untrust;
+                rule rule-any-to-any {
+                    match {
+                        source-address 0.0.0.0/0;
+                        destination-address 0.0.0.0/0;
+                    }
+                    then {
+                        source-nat {
+                            interface;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    policies {
+        from-zone SALES to-zone OPERATIONS {
+            policy Allow_HTTP {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    deny;
+                }
+            }
+        }
+        from-zone OPERATIONS to-zone SALES {
+            policy Allow_HTTP {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application [ junos-http junos-icmp-ping ];
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone OPERATIONS to-zone untrust {
+            policy Allow_any {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+    zones {
+        security-zone OPERATIONS {
+            interfaces {
+                vlan.6 {
+                /* To allow for DHCP request traffic */
+                    host-inbound-traffic {
+                        system-services {
+                            dhcp;
+                        }
+                    }
+                }
+            }
+        }
+        security-zone SALES {
+            interfaces {
+                vlan.5 ;
+            }
+        }
+        security-zone untrust {
+            interfaces {
+                ge-0/0/3.0 {
+                /* To allow acces to router services */
+                    host-inbound-traffic {
+                        system-services {
+                            all;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+vlans {    
+    SALES {
+        vlan-id 10;
+        l3-interface vlan.5;
+    }
+    OPERATIONS {
+        vlan-id 20;
+        l3-interface vlan.6;
+    }
+}

@@ -1,0 +1,129 @@
+## Last changed: 2024-02-21 10:23:44 UTC
+version 12.1X46-D30.2;
+/* Two VLANS SALES and OPERATIONS */
+/* OPERATION can ICMP and HTTP to SALES but not vice versa */
+/* By Per Dahlstroem */
+system {
+    host-name SRX240-A;
+    root-authentication {
+        /* Password: Rootpass */
+        encrypted-password "$1$xH9xJoL6$MFOUYnZr4.Qj2NM24XInz/";
+    }
+}
+interfaces {
+    /* OPERATIONS */
+    ge-0/0/7 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members OPERATIONS;
+                }
+            }
+        }
+    }
+    ge-0/0/11 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members OPERATIONS;
+                }
+            }
+        }
+    }
+    /* SALES */
+    ge-0/0/4 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members SALES;
+                }
+            }
+        }
+    }
+    ge-0/0/5 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members SALES;
+                }
+            }
+        }
+    }
+    vlan {
+    /* Virtual interface */
+        /* SALES */
+        unit 5 {
+            family inet {
+                address 192.168.4.1/24;
+                }
+            }
+        /* OPERATIONS */
+        unit 6 {
+            family inet {
+                address 10.1.2.1/24;
+                }
+            }
+        }
+}
+security {
+    policies {
+        from-zone SALE to-zone OPERATION {
+            policy deny_all_traffic {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    deny;
+                }
+            }
+        }
+        from-zone OPERATION to-zone SALE {
+            policy Allow_HTTP_and_ping {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application [ junos-http junos-icmp-ping ];
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+    zones {
+        security-zone OPERATION {
+            interfaces {
+                vlan.6 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                        }
+                    }
+                }
+            }
+        }
+        security-zone SALE {
+            interfaces {
+                vlan.5 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+vlans {    
+    SALES {
+        vlan-id 10;
+        l3-interface vlan.5;
+    }
+    OPERATIONS {
+        vlan-id 20;
+        l3-interface vlan.6;
+    }
+}
